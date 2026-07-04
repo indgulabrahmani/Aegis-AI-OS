@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, missions, approvals, agents, logs, analytics, websocket
+from app.api import auth, missions, approvals, agents, logs, analytics, websocket, employees
 from app.models.database import Base
 from app.core.database import engine
 from app.config import settings
@@ -29,6 +29,7 @@ app.include_router(agents.router)
 app.include_router(logs.router)
 app.include_router(analytics.router)
 app.include_router(websocket.router)
+app.include_router(employees.router)
 
 
 @app.on_event("startup")

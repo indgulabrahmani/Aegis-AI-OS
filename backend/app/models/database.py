@@ -7,6 +7,11 @@ import enum
 Base = declarative_base()
 
 
+class UserRole(enum.Enum):
+    FOUNDER = "founder"
+    EMPLOYEE = "employee"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -14,10 +19,12 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     full_name = Column(String, nullable=False)
     hashed_password = Column(String, nullable=False)
+    role = Column(SQLEnum(UserRole), default=UserRole.FOUNDER, nullable=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     missions = relationship("Mission", back_populates="founder")
+    employee_profile = relationship("Employee", back_populates="user", uselist=False)
 
 
 class MissionStatus(enum.Enum):
@@ -114,6 +121,105 @@ class Log(Base):
 
     mission = relationship("Mission", back_populates="logs")
     task = relationship("Task", back_populates="logs")
+
+
+class EmployeeStatus(enum.Enum):
+    ONLINE = "online"
+    OFFLINE = "offline"
+    IN_MEETING = "in_meeting"
+    WORKING = "working"
+    ON_LEAVE = "on_leave"
+
+
+class LeaveRequestStatus(enum.Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+
+class NotificationType(enum.Enum):
+    TASK_ASSIGNED = "task_assigned"
+    MEETING_REMINDER = "meeting_reminder"
+    DEADLINE_ALERT = "deadline_alert"
+    APPROVAL_RECEIVED = "approval_received"
+    MESSAGE_FROM_FOUNDER = "message_from_founder"
+
+
+class Employee(Base):
+    __tablename__ = "employees"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    name = Column(String, nullable=False)
+    department = Column(String, nullable=False)
+    status = Column(SQLEnum(EmployeeStatus), default=EmployeeStatus.OFFLINE)
+    current_task = Column(Text, nullable=True)
+    productivity_pct = Column(Float, default=0.0)
+    performance_score = Column(Float, default=0.0)
+    check_in_time = Column(DateTime, nullable=True)
+    check_out_time = Column(DateTime, nullable=True)
+    on_break = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", back_populates="employee_profile")
+    daily_reports = relationship("DailyReport", back_populates="employee", cascade="all, delete-orphan")
+    leave_requests = relationship("LeaveRequest", back_populates="employee", cascade="all, delete-orphan")
+    notifications = relationship("Notification", back_populates="employee", cascade="all, delete-orphan")
+
+
+class DailyReport(Base):
+    __tablename__ = "daily_reports"
+
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
+    date = Column(DateTime, default=datetime.utcnow)
+    tasks_completed = Column(Text, nullable=True)
+    tasks_pending = Column(Text, nullable=True)
+    notes = Column(Text, nullable=True)
+    ai_summary = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    employee = relationship("Employee", back_populates="daily_reports")
+
+
+class LeaveRequest(Base):
+    __tablename__ = "leave_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
+    start_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=False)
+    reason = Column(Text, nullable=False)
+    status = Column(SQLEnum(LeaveRequestStatus), default=LeaveRequestStatus.PENDING)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    employee = relationship("Employee", back_populates="leave_requests")
+
+
+class Meeting(Base):
+    __tablename__ = "meetings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    participants = Column(Text, nullable=True)  # JSON string of participant IDs
+    scheduled_at = Column(DateTime, nullable=False)
+    status = Column(String, default="scheduled")
+    notes_url = Column(String, nullable=True)
+    recording_url = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
+    type = Column(SQLEnum(NotificationType), nullable=False)
+    message = Column(Text, nullable=False)
+    read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    employee = relationship("Employee", back_populates="notifications")
 
 
 class Analytics(Base):

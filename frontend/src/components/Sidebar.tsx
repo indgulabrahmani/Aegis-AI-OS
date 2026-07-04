@@ -7,22 +7,38 @@ import {
   FileText, 
   CheckCircle, 
   Settings,
-  Bot
+  Bot,
+  Users
 } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useAuth } from '../contexts/AuthContext';
 
-const navItems = [
-  { path: '/', label: 'Mission Input', icon: Target },
-  { path: '/activity', label: 'Live Activity', icon: Activity },
-  { path: '/agents', label: 'Agents', icon: Bot },
-  { path: '/analytics', label: 'Analytics', icon: BarChart3 },
-  { path: '/documents', label: 'Documents', icon: FileText },
-  { path: '/approvals', label: 'Approval Center', icon: CheckCircle },
-  { path: '/settings', label: 'Settings', icon: Settings },
+const founderNavItems = [
+  { path: '/founder/dashboard', label: 'Mission Control', icon: Target },
+  { path: '/founder/activity', label: 'Live Activity', icon: Activity },
+  { path: '/founder/agents', label: 'Agent Status', icon: Bot },
+  { path: '/founder/analytics', label: 'Analytics', icon: BarChart3 },
+  { path: '/founder/documents', label: 'Documents', icon: FileText },
+  { path: '/founder/approvals', label: 'Approvals', icon: CheckCircle },
+  { path: '/founder/employees', label: 'Employees', icon: Users },
+  { path: '/founder/settings', label: 'Settings', icon: Settings },
+];
+
+const employeeNavItems = [
+  { path: '/employee/dashboard', label: 'Dashboard', icon: Target },
+  { path: '/employee/activity', label: 'Activity', icon: Activity },
+  { path: '/employee/agents', label: 'AI Agents', icon: Bot },
+  { path: '/employee/analytics', label: 'Performance', icon: BarChart3 },
+  { path: '/employee/documents', label: 'Documents', icon: FileText },
+  { path: '/employee/approvals', label: 'Approvals', icon: CheckCircle },
+  { path: '/employee/settings', label: 'Settings', icon: Settings },
 ];
 
 export function Sidebar() {
   const location = useLocation();
+  const { userRole } = useAuth();
+  
+  const navItems = userRole === 'founder' ? founderNavItems : employeeNavItems;
 
   return (
     <motion.aside

@@ -1,6 +1,6 @@
 import asyncio
 from app.core.database import engine
-from app.models.database import Base, User
+from app.models.database import Base, User, UserRole
 from app.core.security import get_password_hash
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -27,6 +27,7 @@ async def init_database():
                 email="admin@aegis.ai",
                 full_name="Aegis Admin",
                 hashed_password=get_password_hash("admin123"),
+                role=UserRole.FOUNDER,
                 is_active=True
             )
             session.add(admin)
@@ -36,6 +37,7 @@ async def init_database():
             print("Admin user already exists.")
     
     print("Database initialization complete.")
+    print("Run 'python seed_data.py' to populate with mock data.")
 
 
 if __name__ == "__main__":

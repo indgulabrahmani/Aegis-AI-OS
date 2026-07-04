@@ -39,6 +39,11 @@ class ActorType(str, Enum):
     FOUNDER = "founder"
 
 
+class UserRole(str, Enum):
+    FOUNDER = "founder"
+    EMPLOYEE = "employee"
+
+
 # User Schemas
 class UserBase(BaseModel):
     email: EmailStr
@@ -47,6 +52,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8)
+    role: UserRole
 
 
 class UserLogin(BaseModel):
@@ -56,6 +62,7 @@ class UserLogin(BaseModel):
 
 class User(UserBase):
     id: int
+    role: UserRole
     is_active: bool = True
     created_at: datetime
 
@@ -66,10 +73,12 @@ class User(UserBase):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    role: UserRole
 
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+    role: Optional[UserRole] = None
 
 
 # Mission Schemas

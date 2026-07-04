@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.core.database import get_db
 from app.core.security import decode_access_token
-from app.models.database import User
+from app.models.database import User, UserRole
 from app.models.schemas import TokenData
 from typing import Optional
 
@@ -26,6 +26,7 @@ async def get_current_user(
         raise credentials_exception
     
     email: Optional[str] = payload.get("sub")
+    role: Optional[str] = payload.get("role")
     if email is None:
         raise credentials_exception
     
@@ -43,4 +44,26 @@ async def get_current_active_user(
 ) -> User:
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+
+
+async def get_current_founder(
+    current_user: User = Depends(get_current_active_user)
+) -> User:
+    if current_user.role != UserRole.FOUNDER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. Founders only."
+        )
+    return current_user
+
+
+async def get_current_employee(
+    current_user: User = Depends(get_current_active_user)
+) -> User:
+    if current_user.role != UserRole.EMPLOYEE:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. Employees only."
+        )
     return current_user
