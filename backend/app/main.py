@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, missions, approvals, agents, logs, analytics, websocket, employees
+from app.api import auth, missions, approvals, logs, analytics, websocket, employees
+# from app.api import agents  # Temporarily disabled for authentication testing
 from app.models.database import Base
 from app.core.database import engine
 from app.config import settings
@@ -25,7 +26,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(missions.router)
 app.include_router(approvals.router)
-app.include_router(agents.router)
+# app.include_router(agents.router)  # Temporarily disabled for authentication testing
 app.include_router(logs.router)
 app.include_router(analytics.router)
 app.include_router(websocket.router)

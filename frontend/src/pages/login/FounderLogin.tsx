@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { Crown, Building2, Mail, Lock, ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import api from '../../lib/api';
 
 type AuthMode = 'login' | 'signup' | 'forgot';
 
@@ -53,13 +54,38 @@ export function FounderLogin() {
     setIsLoading(true);
     
     try {
-      // TODO: Connect to backend auth
-      // For now, simulate successful login
-      const mockToken = 'mock-jwt-token-founder';
-      login(mockToken, 'founder');
-      navigate('/founder/dashboard');
-    } catch (error) {
-      setErrors({ email: 'Authentication failed' });
+      if (mode === 'signup') {
+        // Signup
+        const response = await api.post('/api/auth/signup/founder', {
+          email: formData.email,
+          full_name: formData.fullName,
+          password: formData.password,
+        });
+        
+        // After signup, login automatically
+        const loginResponse = await api.post('/api/auth/login', {
+          email: formData.email,
+          password: formData.password,
+        });
+        
+        const { access_token, role } = loginResponse.data;
+        login(access_token, role);
+        navigate('/founder/dashboard');
+      } else {
+        // Login
+        const response = await api.post('/api/auth/login', {
+          email: formData.email,
+          password: formData.password,
+        });
+        
+        const { access_token, role } = response.data;
+        login(access_token, role);
+        navigate('/founder/dashboard');
+      }
+    } catch (error: any) {
+      console.error('Authentication error:', error);
+      const errorMessage = error.response?.data?.detail || 'Authentication failed';
+      setErrors({ email: errorMessage });
     } finally {
       setIsLoading(false);
     }

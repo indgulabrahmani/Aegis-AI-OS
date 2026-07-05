@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Target, Sparkles, ArrowRight, Zap } from 'lucide-react';
+import api from '../lib/api';
 
 const examplePrompts = [
   "Hire our first backend engineer",
@@ -19,11 +20,24 @@ export function MissionInput() {
     if (!mission.trim()) return;
     
     setIsSubmitting(true);
-    // TODO: Connect to backend API
-    setTimeout(() => {
-      setIsSubmitting(false);
+    
+    try {
+      const response = await api.post('/api/missions/', {
+        founder_goal: mission.trim(),
+      });
+      
+      console.log('Mission created:', response.data);
       setMission('');
-    }, 2000);
+      
+      // Navigate to activity page to see the mission progress
+      window.location.href = '/founder/activity';
+    } catch (error: any) {
+      console.error('Mission creation error:', error);
+      const errorMessage = error.response?.data?.detail || 'Failed to launch mission';
+      alert(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

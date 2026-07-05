@@ -6,8 +6,8 @@ from app.core.database import get_db
 from app.core.deps import get_current_active_user
 from app.models.database import User, Mission, Task, Log, MissionStatus, TaskStatus, ActorType
 from app.models.schemas import MissionCreate, MissionResponse, TaskResponse
-from app.services.orchestrator import orchestrator_service
-from app.services.agents import agent_service
+# from app.services.orchestrator import orchestrator_service
+# from app.services.agents import agent_service
 from datetime import datetime
 import asyncio
 
@@ -136,7 +136,7 @@ async def create_mission(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Create a new mission and trigger orchestrator analysis
+    Create a new mission (simplified for authentication testing)
     """
     # Create mission
     new_mission = Mission(
@@ -157,60 +157,12 @@ async def create_mission(
         details=f"Founder created mission: {mission_data.founder_goal}"
     )
     
-    # Analyze mission with orchestrator
-    try:
-        analysis = await orchestrator_service.analyze_mission(mission_data.founder_goal)
-        tasks = orchestrator_service.parse_tasks(analysis)
-        
-        # Create tasks
-        for task_data in tasks:
-            new_task = Task(
-                mission_id=new_mission.id,
-                agent=task_data.agent,
-                description=task_data.description,
-                requires_approval=task_data.requires_approval,
-                status=TaskStatus.QUEUED
-            )
-            db.add(new_task)
-        
-        await db.commit()
-        
-        await log_action(
-            db,
-            ActorType.ORCHESTRATOR,
-            "mission_analyzed",
-            mission_id=new_mission.id,
-            details=f"Orchestrator analyzed mission and created {len(tasks)} tasks"
-        )
-        
-        # Update mission status
-        new_mission.status = MissionStatus.RUNNING
-        await db.commit()
-        
-        # Execute tasks in background
-        result = await db.execute(
-            select(Task).where(Task.mission_id == new_mission.id)
-        )
-        mission_tasks = result.scalars().all()
-        
-        for task in mission_tasks:
-            background_tasks.add_task(execute_agent_task, task.id, db)
-        
-        await db.refresh(new_mission)
-        return new_mission
+    # For authentication testing, skip orchestrator and mark as completed
+    new_mission.status = MissionStatus.COMPLETED
+    await db.commit()
+    await db.refresh(new_mission)
     
-    except Exception as e:
-        await log_action(
-            db,
-            ActorType.ORCHESTRATOR,
-            "orchestration_failed",
-            mission_id=new_mission.id,
-            details=f"Orchestration failed: {str(e)}"
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to analyze mission: {str(e)}"
-        )
+    return new_mission
 
 
 @router.get("/", response_model=List[MissionResponse])
